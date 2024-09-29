@@ -17,21 +17,21 @@ crit.minTWR = 6.0;
 
 % Set up optimization variables
 opt.thrust = ones(sd,sd).*linspace(750, 750, sd)*lbfToN;
-opt.massFraction = ones(sd,sd).*transpose(linspace(.4,.4,sd));
+opt.massFraction = ones(sd,sd).*transpose(linspace(.5,.5,sd));
 
 % Future variables for more optimization
-opt.propMass = 30*ones(sd,sd); % kg     Propellant mass
+opt.propMass = 22.72*ones(sd,sd); % kg     Propellant mass
 opt.thrustDecay = 40; %          N/s    Thrust lost per second
 
 % Other input variables
 % ----------------------vvv--- Input numbers in indicated column only 
 %                        v
-const.dragCoefficient = 0.7  ; %          -     Coefficient of drag
+const.dragCoefficient = 0.5  ; %          -     Coefficient of drag
 const.diameter        = 6     *2.54/100; % in   Rocket diameter    
 const.startAltitude   = 2000  /mToFt; %    ft   Starting altitude (MSL)
-const.isp             = 200   ; %          s    Rocket specific impulse
+const.isp             = 180   ; %          s    Rocket specific impulse
 const.ispDecay        = 0     ; %          s/s  Specific impulse lost per second
-const.flightAngle     = 10    ; %          deg  Angle of flight
+const.flightAngle     = 10     ; %          deg  Angle of flight
 const.railLength      = 40    /mToFt; %    ft   Launch rail length
 const.railButtonDist  = 4     ; %          m    Rail button distance
 
