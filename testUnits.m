@@ -34,7 +34,48 @@ crit = {"mDot"       "kg/s"
         "Q"          "m^3/s"
         "v"          "m/s"
         };
-evaluateUnits("getFlow", inp, crit)
+evaluateUnits("getFlow", inp, crit);
+
+inp = { "d"          "m"
+        "t"          "m"
+        "F"          "N"
+        "n"          "cd/cd"
+        };
+crit = {"bearingStress" "Pa"
+        "shearStress"   "Pa"
+        };
+evaluateUnits("getBoltShearStress", inp, crit);
+
+inp = {"dragCoefficient" "cd/cd"
+        "diameter"        "m"
+        "startAltitude"   "m"
+        "isp"             "s"
+        "ispDecay"        "s/s"
+        "flightAngle"     "deg"
+        "railLength"      "m"
+        "railButtonDist"  "m"
+        "m_leftover"      "kg"
+        "dt"              "s"
+        "thrust"          "N"
+        "massFraction"    "cd/cd"
+        "propMass"        "kg"
+        "thrustDecay"     "N/s"
+        "minTWR"          "cd/cd"
+        };
+crit = {"delta_h"         "m"
+        "t_burn"          "s"
+        "v_max"           "m/s"
+        "v_rail"          "m/s"
+        "a_max"           "m/s^2"
+        "de_max"          "m/s^2"
+        "D_max"           "N"
+        "h_max"           "m"
+        "l"               "m"
+        "t_apogee"        "s"
+        "initialTWR"      "cd/cd"
+        };
+evaluateUnits("getAltitude", inp, crit);
+
 
 
 % Test to ensure all files were checked
@@ -48,7 +89,8 @@ for index = 1:length(files)
         if any(allTests == a)
             fprintf('Test for %s passed.\n', files{index});
         elseif all(testingExclude ~= a)
-            fprintf('No test found for %s.\n', files{index});
+            warning('off', 'backtrace');
+            warning('No test found for %s.\n', files{index});
         end
     end
 end
@@ -61,7 +103,7 @@ function evaluateUnits(func, inp, crit)
     allTests = horzcat(allTests, func);
 
     for x = transpose(inp)
-        condInp.(x{1}) = str2symunit(x{2});
+        condInp.(x{1}) = str2symunit(x{2})*.1;
     end
     
     outp = feval(func, condInp);
