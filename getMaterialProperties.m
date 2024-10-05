@@ -102,6 +102,7 @@ materials.steel4340.yield   = [1,1,.807,.613,.42,.36,.18,.075,.05,.0375,.025,.12
 materials.steel4340.modulus = [1,1,.9,.8,.7,.6,.310,.130,.090,.0675,.045,.0225,0]*200*10^9;
 materials.steel4340.getYieldStrength = @(T) interp1(materials.steel4340.temps, materials.steel4340.yield, T);
 materials.steel4340.getYoungsModulus = @(T) interp1(materials.steel4340.temps, materials.steel4340.modulus, T);
+materials.steel4340.message = "";
 
 % STAINLESS STEEL 303 -----------------------------------------------------
 materials.steel303.kappa   = 16.2; %        W/m-K       Conductivity 

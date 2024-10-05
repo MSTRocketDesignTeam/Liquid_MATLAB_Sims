@@ -1,30 +1,31 @@
-function [r, inp] = getAltitude(arg)
+function r = getAltitude(arg)
 %GETALTITUDE - Returns an estimate of the rocket's apogee based on given
 %input conditions.
 %
-% [r, inp] = getAltitude(opt, const, crit)
-% 
-% This function is designed to be able to be used as an altitude optimizer.
-% It could take in a variety of input condition ranges and output altitudes
+% r = getAltitude(opt, const, crit)
+% This function is designed to be able to be used as an altitude optimizer. 
+% It can take in a variety of input condition ranges and output altitudes 
 % for all of them. You can then find the input conditions that produced the
 % best results and build a rocket based on those. 
-%
+% 
 % In order to do an optimization, you could input an n-dimensional matrix 
-% for each field where there are n variables being optimized and each direction
-% in the matrix corresponds to changes in one variable. This function will
-% run all of the simulations simultaneously to improve calculation time and
-% spit out an n-dimensional matrix of solutions.
+% for each field where there are n variables being optimized and each 
+% direction in the matrix corresponds to changes in one variable. This 
+% function will run all of the simulations simultaneously to improve 
+% calculation time and spit out an n-dimensional matrix of solutions.  
+% Such a matrix can be generated quite easily using the 
+% getOptimixationMatrix function. 
 % 
 % If the min TWR condition is not met for a given case then it's apogee 
 % will be set to zero - excluding it from coming out of the optimization 
 % as a reasonable choice.
 %
-% The r field contains all of the function results, and the inp field
-% returns all of the key input conditions that correspond to each
-% solution so that once the maximum apogee is found, the conditions that
-% yielded that apogee can be found in the corresponding input matrix.
+% The r field is a struct containing all the named function results.
 %
-% A timestep of 0.01 is recommended for this function.
+% A timestep of 0.01 seconds is recommended for this function. Higher 
+% timesteps result in higher calculation times, but you will start 
+% getting noticeable error in the thousands of feet by decreasing your 
+% sim timestep to ~1 second.
 % 
 % Required Values: 
 % arg.dragCoefficient - Coefficient of drag (-)
@@ -66,6 +67,7 @@ function [r, inp] = getAltitude(arg)
 % inp.m_total           - Total mass (kg)
 %
 
+    tic;
     T = arg.thrust; %                 N         Initial thrust
     T_decay = arg.thrustDecay; %      N/s       Amount of thrust lost per second
     zeta = arg.massFraction;%         -         Propellant mass fraction
@@ -78,7 +80,7 @@ function [r, inp] = getAltitude(arg)
     C_D = arg.dragCoefficient; %    -         Coefficient of drag
 
     % Calculated variables
-    A = .25*pi*d.^2; %                m^2       Rocket cross-sectional area
+    A = .25.*pi.*d.^2; %                m^2       Rocket cross-sectional area
     m_prop = arg.propMass; %          kg        Propellant mass
     m_dry = m_prop.*zeta./(1-zeta);%  kg        Rocket dry mass
     m_total = m_dry + m_prop; %       kg        Rocket total mass
@@ -104,18 +106,34 @@ function [r, inp] = getAltitude(arg)
     
     % Iteration setup
     dt = arg.dt; %            s         Simulation time step 
-    t = 0; %                    s         Elapsed mission time
+    t = 0; %                  s         Elapsed mission time
     t_burn = 0;
     flying = 1;
 
+    reps = 0;
+
+    wb = waitbar(0, 'Starting Burns... (0%)');
+
     while any(flying,"all") % When the rocket reaches apogee, stop simulating
-        burning = m > m_dry + arg.m_leftover; % Creates a logical matrix of which simulations are still burning
+        burning = (m > m_dry + arg.m_leftover) & (T > T_decay.*dt); % Creates a logical matrix of which simulations are still burning
         flying = v >= 0; % Creates a logical matrix of which simulations are still flying
         t_burn = t_burn + burning.*dt; % Adds burn time to all remaining simulations
 
+        reps = reps + 1; % For progress bar updates
+        if mod(reps, floor(1./dt)) == 0 && toc > .1
+            if any(burning, "all")
+                progress = min((m_total - m)./(m_prop-arg.m_leftover), [], 'all');
+                waitbar(progress, wb, sprintf('Simulations Burning... (%.0f%%)', progress.*100));
+            elseif any(flying, "all")
+                progress = min(1-v./v_max, [], 'all');
+                waitbar(progress, wb, sprintf('Simulations Coasting... (%.0f%%)', progress.*100));
+            end
+        end
+
+
         % Calculate Decays 
         % - Updates thrust and isp as pressures decrease
-        T = T - T_decay.*dt;
+        T = (T - T_decay.*dt).*(T > T_decay.*dt); % Don't let the thrust dip below 0
         isp = isp - isp_decay.*dt;
 
         T = T.*burning; % If the rocket has burnt out, set thrust to zero
@@ -141,13 +159,13 @@ function [r, inp] = getAltitude(arg)
         % - Updates the rocket's position and altitude.
         % - Updates mission elapsed time
         v = a.*dt.*flying + v; % Only update if you're still burning
-        h = v.*dt.*flying*cosd(arg.flightAngle) + h;
+        h = v.*dt.*flying.*cosd(arg.flightAngle) + h;
         t = t + dt.*flying;
 
         % Track horizontal distance
         % - This ignores wind so it's probably a pretty bad estimate
         % - Think about this more as a minimum distance for a given angle
-        l = l + v.*dt.*flying*sind(arg.flightAngle); 
+        l = l + v.*dt.*flying.*sind(arg.flightAngle); 
 
         v_max = max(v, v_max);
         a_max = max(a, a_max);
@@ -163,6 +181,13 @@ function [r, inp] = getAltitude(arg)
         warning(['In some sims, the rocket might fall out of the sky while still ' ...
             'burning due to a lack of thrust.'])
     end
+
+    if any(m > m_dry + arg.m_leftover)
+        warning(['In some sims, the rocket''s thrust is reduced to ' ...
+            'zero before all propellant is utilzized. Either decrease ' ...
+            'thrust decay, increase thrust, or decrease propellant mass ' ...
+            'to a reasonable value'])
+    end
     
     % Results summary struct
     r.t_burn = t_burn;
@@ -175,6 +200,8 @@ function [r, inp] = getAltitude(arg)
     r.l     = l;
     r.t_apogee = t;
     r.initialTWR = arg.thrust./m_total./g;
+    r.m_dry = m_dry;
+    r.m_total = m_total;
 
     acceptable = arg.minTWR <= r.initialTWR;
     if any(~acceptable)
@@ -183,12 +210,8 @@ function [r, inp] = getAltitude(arg)
     end
 
     r.delta_h = (h - h_start).*acceptable;
+    
+    close(wb);
 
-    % Input recap struct
-    inp.T = arg.thrust;
-    inp.zeta = arg.massFraction;
-    inp.m_prop = arg.propMass;
-    inp.C_D = arg.dragCoefficient;
-    inp.m_dry = m_dry;
-    inp.m_total = m_total;
+    toc;
 end
