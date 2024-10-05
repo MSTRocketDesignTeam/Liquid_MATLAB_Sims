@@ -40,7 +40,7 @@ function r = getAltitude(arg)
 % arg.dt              - Timestep for running simulation (s)
 %
 % arg.thrust            - Rocket starting thrust (N)
-% arg.massFraction      - Mass fraction {Dry mass/total mass} (-)
+% arg.massFraction      - Mass fraction {Prop mass/total mass} (-)
 % arg.propMass          - Propellant mass (kg)
 % arg.thrustDecay       - Thrust lost per second due to blow down (N/s)
 %
@@ -58,13 +58,6 @@ function r = getAltitude(arg)
 % r.l                   - Lateral distance traveled at given angle (m)
 % r.t_apogee            - Time to apogee (s)
 % r.initialTWR          - TWR at start of burn (-)
-% 
-% inp.T                 - Input thrust (N)
-% inp.zeta              - Input mass fraction (-)
-% inp.C_D               - Drag coefficient (-)
-% inp.m_prop            - Propellant mass (kg)
-% inp.m_dry             - Dry mass (kg)
-% inp.m_total           - Total mass (kg)
 %
 
     tic;
@@ -80,9 +73,9 @@ function r = getAltitude(arg)
     C_D = arg.dragCoefficient; %    -         Coefficient of drag
 
     % Calculated variables
-    A = .25.*pi.*d.^2; %                m^2       Rocket cross-sectional area
+    A = .25.*pi.*d.^2; %              m^2       Rocket cross-sectional area
     m_prop = arg.propMass; %          kg        Propellant mass
-    m_dry = m_prop.*zeta./(1-zeta);%  kg        Rocket dry mass
+    m_dry = m_prop.*(1-zeta)./zeta;%   kg        Rocket dry mass
     m_total = m_dry + m_prop; %       kg        Rocket total mass
 
     % Initialize Constants
