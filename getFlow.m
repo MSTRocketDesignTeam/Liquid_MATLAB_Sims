@@ -12,7 +12,7 @@ function outp = getFlow(arg)
 % 
 % Required Values:
 % arg.mDot*      - Total orifice group mass flow rate (kg/s)
-% arg.A*		- Individual orifice area (m^2)
+% arg.A*	     - Individual orifice area (m^2)
 % 
 % arg.C_d        - Orifice discharge coefficient (-)
 % arg.rho        - Fluid density at orifice (kg/m^3)
