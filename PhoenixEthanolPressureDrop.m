@@ -1,5 +1,14 @@
 % Pressure Drop Calculator for Phoenix Ethanol Line
-% Eric Miranda
+%{
+Made by Eric Miranda
+
+The purpose of this MATLAB script is to estimate the pressure drop
+experienced in the feed line of Phoenix.
+Good resources for learning how to calculate pressure drop are Fluid
+Mechanics by Frank M. White, and Crane Technical Paper 410. Both of these
+are in the sharepoint under Documents\02 - Liquid Projects\ 94 - Phoenix\
+Feed System\Educational Resources.
+%}
 
 clear
 clc
