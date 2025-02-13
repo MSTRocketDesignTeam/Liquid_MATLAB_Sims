@@ -11,7 +11,7 @@ function [density, viscosity] = getProperties(fluid, temperature)
             row_finder = properties.T == temperature;
             row = find(row_finder);
             density = properties.("ρ(l)")(row);
-            viscosity = properties.("µ")(row);
+            viscosity = properties.("µ")(row)/1000;
         elseif temperature <= 97 && temperature >= -131
             lowtemp = floor(temperature);
             hightemp = ceil(temperature);
@@ -20,15 +20,14 @@ function [density, viscosity] = getProperties(fluid, temperature)
             temp_between = (temperature - lowtemp)/(hightemp - lowtemp);
 
             density = lininterp(properties.("ρ(l)")(lowrow), properties.("ρ(l)")(highrow), temp_between);
-            viscosity = lininterp(properties.("µ")(lowrow), properties.("µ")(highrow), temp_between);
+            viscosity = lininterp(properties.("µ")(lowrow), properties.("µ")(highrow), temp_between)/1000;
         else
             fprintf('Please enter a temperature value between -131 and 97 degrees Farenheight')
             return
         end
-    end
 
     % Gets properties of ethanol
-    if strcmp(fluid, 'Ethanol')
+    elseif strcmp(fluid, 'Ethanol')
         density = 789;
         viscosity = .00125;
     end
